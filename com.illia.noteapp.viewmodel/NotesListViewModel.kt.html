@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotesListViewModel.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">com.illia.noteapp.viewmodel</a> &gt; <span class="el_source">NotesListViewModel.kt</span></div><h1>NotesListViewModel.kt</h1><pre class="source lang-java linenums">package com.illia.noteapp.viewmodel
+
+import androidx.hilt.lifecycle.ViewModelInject
+import androidx.lifecycle.*
+import com.illia.noteapp.model.dto.Note
+import com.illia.noteapp.model.repository.NoteRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+<span class="fc" id="L10">class NotesListViewModel @ViewModelInject constructor(private val noteRepository: NoteRepository) :</span>
+<span class="fc" id="L11">    ViewModel(),</span>
+    LifecycleObserver {
+
+<span class="fc" id="L14">    private val _deleted = MutableLiveData&lt;Boolean&gt;()</span>
+    val deleteFinished: LiveData&lt;Boolean&gt;
+<span class="fc" id="L16">        get() = _deleted</span>
+
+<span class="fc" id="L18">    private val _selection = MutableLiveData&lt;Int&gt;()</span>
+    val selection: LiveData&lt;Int&gt;
+<span class="fc" id="L20">        get() = _selection</span>
+
+<span class="pc" id="L22">    val selectionShown = MutableLiveData&lt;Boolean&gt;()</span>
+
+<span class="nc" id="L24">    var firstVisibleListPosition = 0</span>
+<span class="pc" id="L25">    val notes = observeNotes().distinctUntilChanged()</span>
+
+    fun observeNotes(): LiveData&lt;List&lt;Note?&gt;?&gt; {
+<span class="fc" id="L28">        return noteRepository.observeNotes()</span>
+    }
+
+    fun updateSelection(count: Int) {
+<span class="fc" id="L32">        _selection.value = count</span>
+<span class="fc" id="L33">    }</span>
+
+    fun deleteNotes(ids: List&lt;Long&gt;) {
+<span class="fc" id="L36">        viewModelScope.launch(Dispatchers.IO) {</span>
+<span class="fc" id="L37">            val isDeleted = noteRepository.deleteNotes(ids)</span>
+<span class="pc bpc" id="L38" title="1 of 2 branches missed.">            if (isDeleted) _deleted.postValue(true)</span>
+<span class="fc" id="L39">        }</span>
+<span class="fc" id="L40">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

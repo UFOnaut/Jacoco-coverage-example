@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NoteViewModel.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">com.illia.noteapp.viewmodel</a> &gt; <span class="el_source">NoteViewModel.kt</span></div><h1>NoteViewModel.kt</h1><pre class="source lang-java linenums">package com.illia.noteapp.viewmodel
+
+import android.content.Context
+import android.content.Intent
+import androidx.hilt.lifecycle.ViewModelInject
+import androidx.lifecycle.*
+import com.illia.noteapp.model.dto.Note
+import com.illia.noteapp.model.repository.NoteRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import java.io.File
+
+<span class="fc" id="L15">class NoteViewModel @ViewModelInject constructor(private val noteRepository: NoteRepository) :</span>
+<span class="fc" id="L16">    ViewModel(),</span>
+    LifecycleObserver {
+
+<span class="fc" id="L19">    var updatedNote: Note? = Note.empty()</span>
+<span class="fc" id="L20">    private val noteId = MutableLiveData&lt;Int&gt;()</span>
+<span class="fc" id="L21">    val note = noteId.switchMap { id -&gt; getNoteOnce(id) }</span>
+
+    private fun getNoteOnce(id: Int): LiveData&lt;Note?&gt; {
+<span class="fc" id="L24">        return liveData(Dispatchers.IO) {</span>
+<span class="fc" id="L25">            val note = noteRepository.getNote(id)</span>
+<span class="pc bpc" id="L26" title="1 of 2 branches missed.">            updatedNote = note ?: updatedNote</span>
+<span class="fc" id="L27">            emit(note)</span>
+<span class="fc" id="L28">        }</span>
+    }
+
+    fun selectNote(id: Int?) {
+<span class="fc" id="L32">        noteId.value = id</span>
+<span class="fc" id="L33">    }</span>
+
+    fun saveNote(): LiveData&lt;Boolean&gt; {
+<span class="fc" id="L36">        return liveData(Dispatchers.IO) {</span>
+<span class="fc" id="L37">            val isSaved = noteRepository.saveNote(updatedNote)</span>
+<span class="pc bpc" id="L38" title="1 of 2 branches missed.">            if (isSaved)</span>
+<span class="fc" id="L39">                updatedNote = Note.empty()</span>
+<span class="fc" id="L40">            emit(isSaved)</span>
+<span class="fc" id="L41">        }</span>
+    }
+
+    fun addImage(context: Context, data: Intent?): LiveData&lt;File?&gt; {
+<span class="fc" id="L45">        return liveData(Dispatchers.IO) {</span>
+<span class="fc" id="L46">            val file = noteRepository.getImageFromIntentData(context, data)</span>
+<span class="pc bpc" id="L47" title="2 of 4 branches missed.">            updatedNote?.imageUri = file?.absolutePath</span>
+<span class="fc" id="L48">            emit(file)</span>
+<span class="fc" id="L49">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

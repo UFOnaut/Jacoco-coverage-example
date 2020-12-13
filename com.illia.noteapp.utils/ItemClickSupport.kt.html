@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ItemClickSupport.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">com.illia.noteapp.utils</a> &gt; <span class="el_source">ItemClickSupport.kt</span></div><h1>ItemClickSupport.kt</h1><pre class="source lang-java linenums">package com.illia.noteapp.utils
+
+import android.view.View
+import android.view.View.OnLongClickListener
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.OnChildAttachStateChangeListener
+import com.illia.noteapp.R
+
+<span class="nc" id="L9">internal class ItemClickSupport private constructor(private val mRecyclerView: RecyclerView) {</span>
+    private var mOnItemClickListener: OnItemClickListener? = null
+    private var mOnItemLongClickListener: OnItemLongClickListener? = null
+    private val mOnClickListener =
+<span class="nc" id="L13">        View.OnClickListener { v -&gt;</span>
+<span class="nc bnc" id="L14" title="All 2 branches missed.">            if (mOnItemClickListener != null) {</span>
+                // ask the RecyclerView for the viewHolder of this view.
+                // then use it to get the position for the adapter
+<span class="nc" id="L17">                val holder = mRecyclerView.getChildViewHolder(v)</span>
+<span class="nc" id="L18">                mOnItemClickListener!!.onItemClicked(</span>
+<span class="nc" id="L19">                    mRecyclerView,</span>
+<span class="nc" id="L20">                    holder.adapterPosition,</span>
+<span class="nc" id="L21">                    v</span>
+                )
+            }
+<span class="nc" id="L24">        }</span>
+    private val mOnLongClickListener =
+<span class="nc" id="L26">        OnLongClickListener { v -&gt;</span>
+<span class="nc bnc" id="L27" title="All 2 branches missed.">            if (mOnItemLongClickListener != null) {</span>
+<span class="nc" id="L28">                val holder = mRecyclerView.getChildViewHolder(v)</span>
+<span class="nc" id="L29">                return@OnLongClickListener mOnItemLongClickListener!!.onItemLongClicked(</span>
+<span class="nc" id="L30">                    mRecyclerView,</span>
+<span class="nc" id="L31">                    holder.adapterPosition,</span>
+<span class="nc" id="L32">                    v</span>
+                )
+            }
+<span class="nc" id="L35">            false</span>
+        }
+    private val mAttachListener: OnChildAttachStateChangeListener =
+<span class="nc" id="L38">        object : OnChildAttachStateChangeListener {</span>
+            override fun onChildViewAttachedToWindow(view: View) {
+                // every time a new child view is attached add click listeners to it
+<span class="nc bnc" id="L41" title="All 2 branches missed.">                if (mOnItemClickListener != null) {</span>
+<span class="nc" id="L42">                    view.setOnClickListener(mOnClickListener)</span>
+                }
+<span class="nc bnc" id="L44" title="All 2 branches missed.">                if (mOnItemLongClickListener != null) {</span>
+<span class="nc" id="L45">                    view.setOnLongClickListener(mOnLongClickListener)</span>
+                }
+<span class="nc" id="L47">            }</span>
+
+<span class="nc" id="L49">            override fun onChildViewDetachedFromWindow(view: View) {}</span>
+        }
+
+    fun setOnItemClickListener(listener: OnItemClickListener?): ItemClickSupport {
+<span class="nc" id="L53">        mOnItemClickListener = listener</span>
+<span class="nc" id="L54">        return this</span>
+    }
+
+    fun setOnItemLongClickListener(listener: OnItemLongClickListener?): ItemClickSupport {
+<span class="nc" id="L58">        mOnItemLongClickListener = listener</span>
+<span class="nc" id="L59">        return this</span>
+    }
+
+    private fun detach(view: RecyclerView) {
+<span class="nc" id="L63">        view.removeOnChildAttachStateChangeListener(mAttachListener)</span>
+<span class="nc" id="L64">        view.setTag(R.id.item_click_support, null)</span>
+<span class="nc" id="L65">    }</span>
+
+    interface OnItemClickListener {
+        fun onItemClicked(
+            recyclerView: RecyclerView?,
+            position: Int,
+            v: View?
+        )
+    }
+
+    interface OnItemLongClickListener {
+        fun onItemLongClicked(
+            recyclerView: RecyclerView?,
+            position: Int,
+            v: View?
+        ): Boolean
+    }
+
+    companion object {
+        fun addTo(view: RecyclerView): ItemClickSupport {
+            // if there's already an ItemClickSupport attached
+            // to this RecyclerView do not replace it, use it
+<span class="nc" id="L87">            var support: ItemClickSupport? =</span>
+<span class="nc" id="L88">                view.getTag(R.id.item_click_support) as ItemClickSupport?</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">            if (support == null) {</span>
+<span class="nc" id="L90">                support = ItemClickSupport(view)</span>
+            }
+<span class="nc" id="L92">            return support</span>
+        }
+
+        fun removeFrom(view: RecyclerView): ItemClickSupport? {
+<span class="nc" id="L96">            val support: ItemClickSupport? =</span>
+<span class="nc" id="L97">                view.getTag(R.id.item_click_support) as ItemClickSupport?</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">            support?.detach(view)</span>
+<span class="nc" id="L99">            return support</span>
+        }
+    }
+
+<span class="nc" id="L103">    init {</span>
+        // the ID must be declared in XML, used to avoid
+        // replacing the ItemClickSupport without removing
+        // the old one from the RecyclerView
+<span class="nc" id="L107">        mRecyclerView.setTag(R.id.item_click_support, this)</span>
+<span class="nc" id="L108">        mRecyclerView.addOnChildAttachStateChangeListener(mAttachListener)</span>
+<span class="nc" id="L109">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

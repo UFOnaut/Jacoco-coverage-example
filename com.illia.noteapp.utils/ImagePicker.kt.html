@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ImagePicker.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">com.illia.noteapp.utils</a> &gt; <span class="el_source">ImagePicker.kt</span></div><h1>ImagePicker.kt</h1><pre class="source lang-java linenums">package com.illia.noteapp.utils
+
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
+import android.content.res.AssetFileDescriptor
+import android.database.Cursor
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.net.Uri
+import android.provider.MediaStore
+import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.FileProvider
+import androidx.exifinterface.media.ExifInterface
+import com.illia.noteapp.BuildConfig
+import com.illia.noteapp.R
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
+
+
+<span class="nc" id="L28">class ImagePickerImpl: ImagePicker {</span>
+
+    companion object {
+
+        private const val DEFAULT_MIN_WIDTH_QUALITY = 400 // min pixels
+        private const val TEMP_IMAGE_NAME = &quot;tempImage.png&quot;
+<span class="nc" id="L34">        private var minWidthQuality = DEFAULT_MIN_WIDTH_QUALITY</span>
+        private var lastImageFile: File? = null
+
+        @JvmStatic
+        fun getPickImageIntent(context: Context): Intent? {
+<span class="nc" id="L39">            var chooserIntent: Intent? = null</span>
+<span class="nc" id="L40">            val intentList: MutableList&lt;Intent&gt; = ArrayList()</span>
+<span class="nc" id="L41">            val pickIntent = Intent(</span>
+<span class="nc" id="L42">                Intent.ACTION_PICK,</span>
+<span class="nc" id="L43">                MediaStore.Images.Media.EXTERNAL_CONTENT_URI</span>
+            )
+<span class="nc" id="L45">            val takePhotoIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)</span>
+<span class="nc" id="L46">            takePhotoIntent.putExtra(&quot;return-data&quot;, true)</span>
+<span class="nc" id="L47">            val uri = FileProvider.getUriForFile(</span>
+<span class="nc" id="L48">                context,</span>
+<span class="nc" id="L49">                BuildConfig.APPLICATION_ID + &quot;.provider&quot;, getTempFile(context)</span>
+            )
+<span class="nc" id="L51">            takePhotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri)</span>
+
+<span class="nc" id="L53">            intentList.add(takePhotoIntent)</span>
+<span class="nc" id="L54">            intentList.add(pickIntent)</span>
+
+
+
+<span class="nc bnc" id="L58" title="All 2 branches missed.">            if (intentList.size &gt; 0) {</span>
+<span class="nc" id="L59">                chooserIntent = Intent.createChooser(</span>
+<span class="nc" id="L60">                    intentList.removeAt(intentList.size - 1),</span>
+<span class="nc" id="L61">                    context.getString(R.string.pick_image_intent_text)</span>
+                )
+<span class="nc" id="L63">                chooserIntent.putExtra(</span>
+<span class="nc" id="L64">                    Intent.EXTRA_INITIAL_INTENTS,</span>
+<span class="nc" id="L65">                    intentList.toTypedArray()</span>
+                )
+
+<span class="nc" id="L68">                val resInfoList: List&lt;ResolveInfo&gt; = context.packageManager</span>
+<span class="nc" id="L69">                    .queryIntentActivities(chooserIntent, PackageManager.MATCH_DEFAULT_ONLY)</span>
+
+<span class="nc bnc" id="L71" title="All 2 branches missed.">                for (resolveInfo in resInfoList) {</span>
+<span class="nc" id="L72">                    val packageName = resolveInfo.activityInfo.packageName</span>
+<span class="nc" id="L73">                    context.grantUriPermission(</span>
+<span class="nc" id="L74">                        packageName,</span>
+<span class="nc" id="L75">                        uri,</span>
+<span class="nc" id="L76">                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION</span>
+                    )
+                }
+            }
+
+
+
+<span class="nc" id="L83">            return chooserIntent</span>
+        }
+
+        @JvmStatic
+        private fun getTempFile(context: Context): File {
+<span class="nc" id="L88">            lastImageFile = createFile(context, &quot;jpg&quot;)</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">            lastImageFile!!.parentFile?.mkdirs()</span>
+<span class="nc" id="L90">            return lastImageFile!!</span>
+        }
+
+        @JvmStatic
+        private fun createFile(context: Context, extension: String): File {
+<span class="nc" id="L95">            val sdf = SimpleDateFormat(&quot;yyyy_MM_dd_HH_mm_ss_SSS&quot;, Locale.US)</span>
+<span class="nc" id="L96">            return File(context.filesDir, &quot;IMAGE_${sdf.format(Date())}.$extension&quot;)</span>
+        }
+
+        @JvmStatic
+        private fun decodeBitmap(context: Context, theUri: Uri?, sampleSize: Int): Bitmap? {
+<span class="nc" id="L101">            val options = BitmapFactory.Options()</span>
+<span class="nc" id="L102">            options.inSampleSize = sampleSize</span>
+<span class="nc" id="L103">            var fileDescriptor: AssetFileDescriptor? = null</span>
+<span class="nc" id="L104">            try {</span>
+<span class="nc" id="L105">                fileDescriptor = context.contentResolver.openAssetFileDescriptor(theUri!!, &quot;r&quot;)</span>
+<span class="nc" id="L106">            } catch (e: FileNotFoundException) {</span>
+<span class="nc" id="L107">                e.printStackTrace()</span>
+            }
+<span class="nc" id="L109">            val actuallyUsableBitmap = BitmapFactory.decodeFileDescriptor(</span>
+<span class="nc" id="L110">                fileDescriptor!!.fileDescriptor, null, options</span>
+            )
+<span class="nc" id="L112">            return actuallyUsableBitmap</span>
+        }
+
+        /**
+         * Resize to avoid using too much memory loading big images (e.g.: 2560*1920)
+         */
+        @JvmStatic
+        private fun getImageResized(context: Context, selectedImage: Uri?): Bitmap? {
+<span class="nc" id="L120">            var bm: Bitmap?</span>
+<span class="nc" id="L121">            val sampleSizes = intArrayOf(5, 3, 2, 1)</span>
+<span class="nc" id="L122">            var i = 0</span>
+            do {
+<span class="nc" id="L124">                bm = decodeBitmap(context, selectedImage, sampleSizes[i])</span>
+<span class="nc" id="L125">                i++</span>
+<span class="nc bnc" id="L126" title="All 4 branches missed.">            } while (bm!!.width &lt; minWidthQuality &amp;&amp; i &lt; sampleSizes.size)</span>
+<span class="nc" id="L127">            return bm</span>
+        }
+
+        @JvmStatic
+        private fun getRotationFromCamera(context: Context, imageFileUri: Uri?, imageFile: File): Int {
+<span class="nc" id="L132">            var rotate = 0</span>
+<span class="nc" id="L133">            try {</span>
+<span class="nc" id="L134">                context.contentResolver.notifyChange(imageFileUri!!, null)</span>
+<span class="nc" id="L135">                val exif = ExifInterface(imageFile.path)</span>
+<span class="nc" id="L136">                val orientation: Int = exif.getAttributeInt(</span>
+<span class="nc" id="L137">                    ExifInterface.TAG_ORIENTATION,</span>
+<span class="nc" id="L138">                    ExifInterface.ORIENTATION_NORMAL</span>
+                )
+<span class="nc bnc" id="L140" title="All 4 branches missed.">                when (orientation) {</span>
+<span class="nc" id="L141">                    ExifInterface.ORIENTATION_ROTATE_270 -&gt; rotate = 270</span>
+<span class="nc" id="L142">                    ExifInterface.ORIENTATION_ROTATE_180 -&gt; rotate = 180</span>
+<span class="nc" id="L143">                    ExifInterface.ORIENTATION_ROTATE_90 -&gt; rotate = 90</span>
+<span class="nc" id="L144">                }</span>
+<span class="nc" id="L145">            } catch (e: Exception) {</span>
+<span class="nc" id="L146">                e.printStackTrace()</span>
+            }
+<span class="nc" id="L148">            return rotate</span>
+        }
+
+        @JvmStatic
+        private fun getRotationFromGallery(context: Context, imageUri: Uri?): Int {
+<span class="nc" id="L153">            var result = 0</span>
+<span class="nc" id="L154">            val columns =</span>
+<span class="nc" id="L155">                arrayOf(&quot;orientation&quot;)</span>
+<span class="nc" id="L156">            var cursor: Cursor? = null</span>
+<span class="nc" id="L157">            try {</span>
+<span class="nc" id="L158">                cursor = context.contentResolver.query(imageUri!!, columns, null, null, null)</span>
+<span class="nc bnc" id="L159" title="All 4 branches missed.">                if (cursor != null &amp;&amp; cursor.moveToFirst()) {</span>
+<span class="nc" id="L160">                    val orientationColumnIndex: Int = cursor.getColumnIndex(columns[0])</span>
+<span class="nc" id="L161">                    result = cursor.getInt(orientationColumnIndex)</span>
+                }
+<span class="nc" id="L163">            } catch (e: Exception) {</span>
+                //Do nothing
+            } finally {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">                cursor?.close()</span>
+            }
+<span class="nc" id="L168">            return result</span>
+        }
+
+
+        private fun rotate(bm: Bitmap?, rotation: Int): Bitmap? {
+<span class="nc bnc" id="L173" title="All 2 branches missed.">            if (rotation != 0) {</span>
+<span class="nc" id="L174">                val matrix = Matrix()</span>
+<span class="nc" id="L175">                matrix.postRotate(rotation.toFloat())</span>
+<span class="nc" id="L176">                return Bitmap.createBitmap(bm!!, 0, 0, bm.width, bm.height, matrix, true)</span>
+            }
+<span class="nc" id="L178">            return bm</span>
+        }
+    }
+
+    override fun getImageFileFromResultIntent(
+        context: Context,
+        imageReturnedIntent: Intent?
+    ): File? {
+<span class="nc" id="L186">        val imageFile: File = lastImageFile!!</span>
+<span class="nc" id="L187">        val selectedImage: Uri?</span>
+<span class="nc" id="L188">        val isCamera = imageReturnedIntent == null || imageReturnedIntent.data == null ||</span>
+<span class="nc bnc" id="L189" title="All 6 branches missed.">                imageReturnedIntent.data.toString().contains(imageFile.toString())</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">        selectedImage = if (isCamera) {</span>
+            /** CAMERA  */
+<span class="nc" id="L192">            FileProvider.getUriForFile(</span>
+<span class="nc" id="L193">                context,</span>
+<span class="nc" id="L194">                BuildConfig.APPLICATION_ID + &quot;.provider&quot;,</span>
+<span class="nc" id="L195">                imageFile</span>
+            )
+        } else {
+            /** ALBUM  */
+<span class="nc" id="L199">            imageReturnedIntent!!.data</span>
+        }
+<span class="nc" id="L201">        var bmp = getImageResized(context, selectedImage)</span>
+<span class="nc" id="L202">        val rotation =</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">            if (isCamera)</span>
+<span class="nc" id="L204">                getRotationFromCamera(context, selectedImage, imageFile)</span>
+            else
+<span class="nc" id="L206">                getRotationFromGallery(context, selectedImage)</span>
+
+<span class="nc" id="L208">        bmp = rotate(bmp, rotation)</span>
+<span class="nc" id="L209">        val fos = FileOutputStream(imageFile)</span>
+
+<span class="nc bnc" id="L211" title="All 2 branches missed.">        bmp?.compress(Bitmap.CompressFormat.PNG, 85, fos)</span>
+<span class="nc" id="L212">        fos.flush()</span>
+<span class="nc" id="L213">        fos.close()</span>
+<span class="nc" id="L214">        return imageFile</span>
+    }
+}
+
+interface ImagePicker {
+    fun getImageFileFromResultIntent(
+        context: Context,
+        imageReturnedIntent: Intent?
+    ): File?
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotesAdapter.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">com.illia.noteapp.ui.adapter</a> &gt; <span class="el_source">NotesAdapter.kt</span></div><h1>NotesAdapter.kt</h1><pre class="source lang-java linenums">package com.illia.noteapp.ui.adapter
+
+import android.graphics.Color
+import android.graphics.ColorFilter
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.selection.ItemDetailsLookup
+import androidx.recyclerview.selection.SelectionTracker
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
+import com.illia.noteapp.R
+import com.illia.noteapp.databinding.LayoutNoteItemBinding
+import com.illia.noteapp.model.dto.Note
+
+<span class="nc" id="L21">class NotesAdapter(private val items: MutableList&lt;Note?&gt;): ListAdapter&lt;Note, NotesAdapter.NotesListItemViewHolder&gt;(DIFF_CALLBACK) {</span>
+
+<span class="nc" id="L23">    var tracker: SelectionTracker&lt;Long&gt;? = null</span>
+
+<span class="nc" id="L25">    init {</span>
+<span class="nc" id="L26">        setHasStableIds(true)</span>
+<span class="nc" id="L27">    }</span>
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NotesListItemViewHolder {
+<span class="nc" id="L30">        val inflater = LayoutInflater.from(parent.context)</span>
+<span class="nc" id="L31">        val view: View</span>
+<span class="nc" id="L32">        view = LayoutNoteItemBinding.inflate(inflater, parent, false).root</span>
+<span class="nc" id="L33">        return NotesListItemViewHolder(view)</span>
+    }
+
+    override fun getItemId(position: Int): Long {
+<span class="nc bnc" id="L37" title="All 4 branches missed.">        return items[position]?.id.hashCode().toLong()</span>
+    }
+
+    override fun getItemCount(): Int {
+<span class="nc" id="L41">        return items.size</span>
+    }
+
+    override fun onBindViewHolder(holder: NotesListItemViewHolder, position: Int) {
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        holder.binding?.item = items[position]</span>
+<span class="nc bnc" id="L46" title="All 8 branches missed.">        holder.binding?.rlMain?.isSelected = tracker?.isSelected(getItemId(position)) == true</span>
+<span class="nc" id="L47">    }</span>
+
+    public override fun getItem(position: Int): Note? {
+<span class="nc" id="L50">        return items[position]</span>
+    }
+
+    fun update(items: List&lt;Note?&gt;) {
+<span class="nc" id="L54">        this.items.clear()</span>
+<span class="nc" id="L55">        this.items.addAll(items)</span>
+<span class="nc" id="L56">        notifyDataSetChanged()</span>
+<span class="nc" id="L57">    }</span>
+
+    companion object {
+<span class="nc" id="L60">        val DIFF_CALLBACK = object : DiffUtil.ItemCallback&lt;Note&gt;() {</span>
+
+            override fun areItemsTheSame(oldItem: Note, newItem: Note): Boolean {
+<span class="nc" id="L63">                return oldItem.id == newItem.id</span>
+            }
+
+            override fun areContentsTheSame(oldItem: Note, newItem: Note): Boolean {
+<span class="nc" id="L67">                return oldItem == newItem</span>
+            }
+        }
+    }
+
+<span class="nc" id="L72">    class NotesListItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {</span>
+<span class="nc" id="L73">        var binding = DataBindingUtil.bind&lt;LayoutNoteItemBinding&gt;(view)</span>
+
+<span class="nc" id="L75">        fun getItemDetails(): ItemDetailsLookup.ItemDetails&lt;Long&gt; = object : ItemDetailsLookup.ItemDetails&lt;Long&gt;() {</span>
+
+<span class="nc" id="L77">            override fun getPosition(): Int = adapterPosition</span>
+
+<span class="nc" id="L79">            override fun getSelectionKey(): Long? = itemId</span>
+<span class="nc" id="L80">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
